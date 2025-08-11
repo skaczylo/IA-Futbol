@@ -1,0 +1,17 @@
+-Dataset
+    -Técnicas de marcado (a unas fotos):
+        -cv2 
+
+-Modelo Deteccion
+    -Explicar tipo de Modelo
+    -Explicar funcionamiento yolo y diferencias
+    -¿Comparar resultados con una redconvolucional normal ?
+
+-Tracking
+    -Explicar distintos algoritmos e implementarlos
+    
+-Homografía 
+    -Campo de futbol y posiciones relativas
+    -Reconstruccion del partido + Tracking
+
+-Re-identificacion?
