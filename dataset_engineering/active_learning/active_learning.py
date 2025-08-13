@@ -41,11 +41,22 @@ class LS:
         self.project = next((p for p in projects_info if p.title == project_name),None)
         self.project = self.client.projects.get(self.project.id)
 
+       
+    def import_imgs(self):
         #sincronizamos datos
         storages = self.client.import_storage.local.list(project=self.project.id)
+
         for strg in storages:
-            self.client.import_storage.local.sync(strg.id)
-    
+            
+            self.client.import_storage.local.sync(
+                    strg.id,
+                    request_options={"timeout_in_seconds": 7200}  # 2 horas
+            )
+
+
+           
+
+
     def refresh_token(self):
         response = requests.post(self.URL_REFRESH,json={"refresh": self.API_KEY})
         self.ACCESS_TOKEN = response.json().get("access")

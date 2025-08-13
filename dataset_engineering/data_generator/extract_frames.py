@@ -12,7 +12,7 @@ RESULT_PATH ="dataset_engineering/data_generator/generated_images"
 VIDEOS_PATH = "dataset_engineering/data_generator/videos"
 
 
-def extract_frames(video_path,output_path,percentage = 0.2,delete=True):
+def extract_frames(video_path,output_path,percentage = 0.5,delete=True):
     """
     Extrae del video dado un 20% de los frames y los almacena en la ruta indicada por output_path.
     Ademas, por defecto, elimina el video una vez extraida las imagenes
@@ -35,7 +35,7 @@ def extract_frames(video_path,output_path,percentage = 0.2,delete=True):
             print(f"Failed to read frame at {second}s in {video_path}")
             continue
 
-        frame_id = f"{time.strftime("%Y%m%d_%H%M%S")}_{uuid.uuid4().hex[:6] }" # formato tipo 20250710_155203;parte aleatoria para evitar duplicados
+        frame_id = f"{time.strftime("%Y%m%d_%H%M%S")}_{uuid.uuid4().hex[:10] }" # formato tipo 20250710_155203;parte aleatoria para evitar duplicados
         cv.imwrite(os.path.join(output_path,f"{frame_id}.jpg"),frame)
 
 

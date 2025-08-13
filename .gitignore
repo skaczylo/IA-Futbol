@@ -1,4 +1,5 @@
 Dataset/
 runs/
 **/.env
-
+**/generated_images/
+**/videos/
