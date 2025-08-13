@@ -3,3 +3,4 @@ runs/
 **/.env
 **/generated_images/
 **/videos/
+**/models/
