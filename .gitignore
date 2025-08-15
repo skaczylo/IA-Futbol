@@ -4,3 +4,5 @@ runs/
 **/generated_images/
 **/videos/
 **/models/
+models/
+**/__pycache__/

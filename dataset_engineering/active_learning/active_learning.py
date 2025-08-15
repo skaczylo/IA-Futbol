@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 import os
-from ultralytics import YOLO
 from label_studio_sdk import LabelStudio
 import requests
 from PIL import Image

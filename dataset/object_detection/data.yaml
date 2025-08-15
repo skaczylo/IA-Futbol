@@ -1,0 +1,5 @@
+train: ./train
+val: ./valid
+
+nc: 3
+names: ['ball', 'player', 'referee']
