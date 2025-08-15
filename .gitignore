@@ -6,3 +6,4 @@ runs/
 **/models/
 models/
 **/__pycache__/
+**/fine_tuning/

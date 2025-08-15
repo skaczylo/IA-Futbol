@@ -1,5 +1,0 @@
-train: ./train
-val: /home/adrian/IA-Futbol/Dataset/detection/valid
-
-nc: 3
-names: ['ball', 'player', 'referee']
