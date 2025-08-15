@@ -53,10 +53,6 @@ def extract_crops(video_path,object_model,ids,crop_number=750):
 
 
 
-
-
-
-
 def display_video(video_path,height=450,width=800):
     """
     Muestra el video en el notebook mediante HTML
@@ -90,10 +86,10 @@ def write_video(video_path,output_path,object_model,stylized_ob_detection,text_l
         
         #Marcado de Objetos
         results = object_model(frame,verbose=False) #devuelve una lista, en este caso una lista con un solo objeto
-        frame_ = it.annotate_frame(frame,
-                                            detections=sv.Detections.from_ultralytics(results[0]),
-                                            stylized=stylized_ob_detection,
-                                            text_label=text_label)
+        frame_ = it.annotate_image(frame,
+                                    labels=sv.Detections.from_ultralytics(results[0]),
+                                    stylized=stylized_ob_detection,
+                                    text_label=text_label)
         video_BB.write(frame_)
           
         
