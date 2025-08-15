@@ -20,7 +20,6 @@ BALL = 0
 BLUE = sv.Color(r=0, g=200, b =235)
 
 
-
 def referee_annotator(image,detections,text_label =True):
     """
     Marca a los arbitros con una elipse 
