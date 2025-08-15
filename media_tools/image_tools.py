@@ -3,7 +3,7 @@ Modulo con funciones relativas al tratado de imagenes
 
 """
 
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 import cv2
 import supervision as sv
 import numpy as np
@@ -69,8 +69,24 @@ def ball_annotator(image,detections):
 
 
 
+def extract_crops(image, xyxy):
+    """
+    Dada una imagen y una lista de recortes, devuelve una lista de imagenes en ndarray correspondientes 
+    a los recortes
+    """
 
+    if not isinstance(image, np.ndarray):
+        image = cv2.imread()
 
+    crops = []
+    for coordinates in xyxy:
+        x1,y1,x2,y2 = coordinates
+
+        crop = image[int(y1):int(y2), int(x1):int(x2)]
+        crops.append(crop)
+
+    return crops
+        
 
 def yolo_to_supervision_bb(img_size,bb_yolo):
     """
