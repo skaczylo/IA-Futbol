@@ -158,7 +158,7 @@ class LS:
             imgs_path = os.path.join(self.IMG_PATH)
             labels = os.listdir(labels_path)
 
-            for label in labels:
+            for label in tqdm(labels):
                 name,extension = os.path.splitext(label)
 
                 #Rutas originales
@@ -167,7 +167,7 @@ class LS:
 
                 #Mover a rutas destinos
                 try:
-                    shutil.copy(img_path,os.path.join(self.COMPLETED_TASKS_PATH,name+".jpg"))
+                    shutil.copy(img_path,os.path.join(self.COMPLETED_TASKS_PATH,"images",name+".jpg"))
                 except:
                     print(f"Error during copy: {name}.jpg")
 
