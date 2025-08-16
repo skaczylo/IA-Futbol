@@ -21,15 +21,14 @@ class LS:
         self.model = model
         self.model_name = model_name
         #Datos de acceso
-        
+         
         self.API_KEY = os.getenv("API_KEY")
         self.LABEL_STUDIO_URL = os.getenv("LABEL_STUDIO_URL")
         self.URL_REFRESH = os.getenv("URL_REFRESH") #Url para refrescar token de acceso
-        self.BASE_URL = os.getenv("BASE_URL") #Base url de label studio: puerto 8080
         self.DOWNLOAD_PATH = os.getenv("DOWNLOAD_PATH") #Ruta donde se descargan las imagenes completadas
         self.IMG_PATH = os.getenv("IMG_PATH") #Ruta a las imagenes generadas
-        self.FT_PATH = os.getenv("FT_PATH") #Ruta a la carpeta Fine tuning
-
+        self.COMPLETED_TASKS_PATH = os.getenv("COMPLETED_TASKS_PATH") #Ruta a la carpeta Fine tuning
+        self.DATASET = os.getenv("DATASET")
         response = requests.post(self.URL_REFRESH,json={"refresh": self.API_KEY})
         self.ACCESS_TOKEN = response.json().get("access")
 
@@ -51,9 +50,6 @@ class LS:
                     strg.id,
                     request_options={"timeout_in_seconds": 7200}  # 2 horas
             )
-
-
-           
 
 
     def refresh_token(self):
@@ -101,7 +97,7 @@ class LS:
         tasks = self.client.tasks.list(project=self.project.id)
         for i, task in enumerate(tqdm(tasks)):
         
-            url = f'{self.BASE_URL}{task.data['image']}'
+            url = f'{self.LABEL_STUDIO_URL}{task.data['image']}'
            
             self.refresh_token()
             request = requests.get(url, headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'}, stream=True)
@@ -112,13 +108,14 @@ class LS:
             self.client.predictions.create(task=task.id, result=predictions['result'], score=predictions['score'], model_version=predictions['model_version'])
 
     def predict_new_tasks(self):
+
         tasks = self.client.tasks.list(project = self.project.id)
 
         for i, task in enumerate(tqdm(tasks)):
             dic = task.dict()
 
             if dic["total_predictions"] == 0:
-                url = f'{self.BASE_URL}{task.data['image']}'
+                url = f'{self.LABEL_STUDIO_URL}{task.data['image']}'
                 self.refresh_token()
                 request = requests.get(url, headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'}, stream=True)
                 image = Image.open(request.raw)
@@ -130,12 +127,12 @@ class LS:
 
     def export_completed_tasks(self):
         """
-        Exporta las etiquetas de las imagenes revisadas a la carpeta destino junto a las imagenes
-        path = destino donde se descargaran las etiquetas en formato YOLO
+        Exporta las imagenes y las etiquetadas de las tareas COMPLETADAS al  la carpeta 
+        COMPLETED_TASKs
         """
 
         #Creamos una nueva snapshot
-        url =f'{self.BASE_URL}/api/projects/{self.project.id}/exports/'
+        url =f'{self.LABEL_STUDIO_URL}/api/projects/{self.project.id}/exports/'
         self.refresh_token()
         snapshot_rq = requests.post(url,headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'},json = {"task_filter_options": {"finished": "only"}})
 
@@ -146,7 +143,7 @@ class LS:
             print(snapshot_rq.text)
 
         #Descargamos la snapshot en formato YOLO
-        url = f'{self.BASE_URL}/api/projects/{self.project.id}/exports/{export_pk}/download?exportType=YOLO'
+        url = f'{self.LABEL_STUDIO_URL}/api/projects/{self.project.id}/exports/{export_pk}/download?exportType=YOLO'
         self.refresh_token()
         download_snapshot_rq = requests.get(url,headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'})
 
@@ -168,23 +165,31 @@ class LS:
                 img_path = os.path.join(imgs_path,name+".jpg")
                 label_path = os.path.join(labels_path,label)
 
-
                 #Mover a rutas destinos
                 try:
-                    shutil.copy(img_path,os.path.join(self.FT_PATH,"train","images",name+".jpg"))
-                    shutil.copy(label_path,os.path.join(self.FT_PATH,"train","labels",label))
-                    os.remove(label_path) 
+                    shutil.copy(img_path,os.path.join(self.COMPLETED_TASKS_PATH,name+".jpg"))
                 except:
                     print(f"Error during copy: {name}.jpg")
 
 
-
-
-
-    def increase_dataset(self):
+    def move2dataset(self):
         """
-        Mueve las nuevas imagenes etiquetas y almacendas en fine-tuning, al dataset principal de entrenamiento del modelo
+        Mueve las imagenes y las etiquetas de las tareas COMPLETADAS al dataset base
+
         """
+        imgs_path = os.path.join(self.COMPLETED_TASKS_PATH,"images")
+        labels_path = os.path.join(self.COMPLETED_TASKS_PATH,"labels")
+        imgs = os.listdir(imgs_path)
+
+        for img in tqdm(imgs):
+            name,_ = os.path.splitext(img) #Separar nombre de extension
+
+            shutil.copy(os.path.join(imgs_path,name+".jpg"), 
+                        os.path.join(self.DATASET,"images",name+".jpg")) #Copioamos la imagen
+            
+            shutil.copy(os.path.join(labels_path,name+".txt"), 
+                        os.path.join(self.DATASET,"labels",name+".txt")) #Copioamos la etiqueta
+                        
         
     def delete_completed_tasks(self):
         """

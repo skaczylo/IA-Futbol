@@ -1,4 +1,4 @@
-Dataset/
+dataset/
 runs/
 **/.env
 **/generated_images/
@@ -7,3 +7,6 @@ runs/
 models/
 **/__pycache__/
 **/fine_tuning/
+**/pruebas/
+**/completed_tasks/
+**/dataset/

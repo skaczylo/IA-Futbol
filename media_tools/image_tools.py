@@ -20,6 +20,20 @@ BALL = 0
 BLUE = sv.Color(r=0, g=200, b =235)
 
 
+def bounding_box_annotator(image,detections,text_label = True):
+
+    bounding_box_annotator = sv.BoxAnnotator()
+    frame_ = bounding_box_annotator.annotate(scene=image.copy(),detections=detections)
+    
+
+    if text_label is True:
+        
+        label_annotator = sv.LabelAnnotator()
+        labels = [LABELS[int(id)] for id in detections.class_id]
+        frame_ = label_annotator.annotate(scene=frame_, detections=detections, labels=labels)
+
+    return frame_
+
 def referee_annotator(image,detections,text_label =True):
     """
     Marca a los arbitros con una elipse 
@@ -156,8 +170,9 @@ def annotate_image(image,labels,stylized=False,text_label = True):
         frame_ = player_annotator(frame_,player__detections,text_label)
         frame_ = referee_annotator(frame_,referee_detections,text_label)
     else:
-        bounding_box_annotator = sv.BoxAnnotator()
-        frame_ = bounding_box_annotator.annotate(scene=image.copy(),detections=labels_sv)
+
+        frame_ = bounding_box_annotator(image,labels_sv,text_label=text_label)
+        
 
     return frame_
 
