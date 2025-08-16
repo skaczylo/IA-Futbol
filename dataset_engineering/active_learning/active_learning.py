@@ -60,10 +60,10 @@ class LS:
         """
         Dada una imagen, el modelo del proyecto predice la imagen
         """
-
-        results = self.model(image,verbose=False)
+        results = self.model(image,verbose = False)
+        predictions = []
         for result in results:
-
+            img_width, img_height = result.orig_shape
             boxes = result.boxes.cpu().numpy()
             prediction = {'result': [], 'score': 0.0, 'model_version': self.model_name}
             scores = []
@@ -78,18 +78,19 @@ class LS:
                     'value': {
                         'rotation': 0,
                         'rectanglelabels': [result.names[class_id]],
-                        'width': w / img_width * 100,
-                        'height': h / img_height * 100,
-                        'x': (x - 0.5 * w) / img_width * 100,
-                        'y': (y - 0.5 * h) / img_height * 100
+                        'width': float(w / img_width * 100),
+                        'height': float(h / img_height * 100),
+                        'x': float((x - 0.5 * w) / img_width * 100),
+                        'y': float((y - 0.5 * h) / img_height * 100)
                     },
                     'score': float(score),
                     'type': 'rectanglelabels',
                 })
                 scores.append(float(score))
             prediction['score'] = min(scores) if scores else 0.0
-        
-        return prediction
+            predictions.append(prediction)
+
+        return predictions
     
 
     def predict_all_tasks(self):
@@ -104,8 +105,8 @@ class LS:
             image = Image.open(request.raw)
                
             w,h = image.size
-            predictions = self.predict_img(image,w,h)
-            self.client.predictions.create(task=task.id, result=predictions['result'], score=predictions['score'], model_version=predictions['model_version'])
+            predictions = self.predict_img(image,w,h)[0]
+            self.client.predictions.create(task=task.id, result=predictions['result'], score=float(predictions['score']), model_version=predictions['model_version'])
 
     def predict_new_tasks(self):
 
