@@ -63,7 +63,7 @@ class LS:
         results = self.model(image,verbose = False)
         predictions = []
         for result in results:
-            img_width, img_height = result.orig_shape
+            
             boxes = result.boxes.cpu().numpy()
             prediction = {'result': [], 'score': 0.0, 'model_version': self.model_name}
             scores = []
@@ -92,37 +92,41 @@ class LS:
 
         return predictions
     
+    def predict_image(self,t_id):
+
+        task = self.client.tasks.get(id = t_id)
+        task_properties = task.dict()
+        img_path = task_properties['data']['image']
+         
+        img= '/'+img_path[img_path.find('home/'):]
+        if os.path.exists(img): #Comprueba que esta la imagen
+            url = f'{self.LABEL_STUDIO_URL}{task.data['image']}'
+            self.refresh_token()
+            request = requests.get(url, headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'}, stream=True)
+            image = Image.open(request.raw)
+            w,h = image.size
+            predictions = self.predict_img(image,w,h)[0]
+            self.client.predictions.create(task=task.id, result=predictions['result'], score=float(predictions['score']), model_version=predictions['model_version'])
+
 
     def predict_all_tasks(self):
 
         tasks = self.client.tasks.list(project=self.project.id)
         for i, task in enumerate(tqdm(tasks)):
-        
-            url = f'{self.LABEL_STUDIO_URL}{task.data['image']}'
-           
-            self.refresh_token()
-            request = requests.get(url, headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'}, stream=True)
-            image = Image.open(request.raw)
-               
-            w,h = image.size
-            predictions = self.predict_img(image,w,h)[0]
-            self.client.predictions.create(task=task.id, result=predictions['result'], score=float(predictions['score']), model_version=predictions['model_version'])
+            t_properties = task.dict()
+
+            if t_properties['completed_at'] is None: #Solo predecir sobre imagens que no esten completadas
+                self.predict_image(t_id= int(t_properties['id']))
 
     def predict_new_tasks(self):
 
         tasks = self.client.tasks.list(project = self.project.id)
 
         for i, task in enumerate(tqdm(tasks)):
-            dic = task.dict()
+            t_properties = task.dict()
 
-            if dic["total_predictions"] == 0:
-                url = f'{self.LABEL_STUDIO_URL}{task.data['image']}'
-                self.refresh_token()
-                request = requests.get(url, headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'}, stream=True)
-                image = Image.open(request.raw)
-                w,h = image.size
-                predictions = self.predict_img(image,w,h)
-                self.client.predictions.create(task=task.id, result=predictions['result'], score=predictions['score'], model_version=predictions['model_version'])
+            if t_properties["total_predictions"] == 0:
+               self.predict_image(t_id= int(t_properties['id']))
 
 
 

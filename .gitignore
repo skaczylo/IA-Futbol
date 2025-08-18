@@ -10,3 +10,6 @@ models/
 **/pruebas/
 **/completed_tasks/
 **/dataset/
+dataset.zip
+ByteTrack/
+**/yolo11n.pt
