@@ -57,8 +57,6 @@ def display_video(video_path,height=450,width=800):
     """
     Muestra el video en el notebook mediante HTML
     """
-
-
     return HTML(f"""
     <video width="{width}" height="{height}" controls>
         <source src="{video_path}" type="video/mp4">
