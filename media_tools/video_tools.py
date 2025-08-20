@@ -6,6 +6,7 @@ from IPython.display import HTML
 from . import image_tools as it
 import random
 from tqdm import tqdm
+from typing import Callable
 
 # Ball = 0, Player = 1, Referee = 2
 LABELS = ["Ball","Player","Referee"]
@@ -14,7 +15,6 @@ PLAYER = 1
 REFEREE = 2
 BALL = 0
 BLUE = sv.Color(r=0, g=200, b =235)
-
 
 
 def extract_crops(video_path,object_model,ids,crop_number=750):
@@ -63,8 +63,17 @@ def display_video(video_path,height=450,width=800):
     </video>
     """)
 
-def write_video(video_path,output_path,object_model,stylized_ob_detection,text_label = True):
+
+def write_video(video_path:str,output_path:str,write_frame:Callable[[np.ndarray],np.ndarray]):
+    """
+    Funcion que procesa un video
     
+    video_path = ruta del video original
+    output_path = ruta del video procesado
+    write_frame = función que ha de recibir como argumento una imagen en formato numpy y que se encarga de procesar
+    y tratar el frame según corresponda. Ha devolver una imagen en formato np.ndarray
+    """
+
     #Extraemos propiedades
     video = cv2.VideoCapture(video_path)
     fps = int(video.get(cv2.CAP_PROP_FPS))
@@ -72,8 +81,8 @@ def write_video(video_path,output_path,object_model,stylized_ob_detection,text_l
     height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    video_BB =  cv2.VideoWriter(output_path,fourcc,fps,(width,height),isColor=True)
-  
+    ouput =  cv2.VideoWriter(output_path,fourcc,fps,(width,height),isColor=True)
+
     for _ in tqdm(range(total_frames),desc="Processing"):
 
         #Lee el frame
@@ -81,16 +90,20 @@ def write_video(video_path,output_path,object_model,stylized_ob_detection,text_l
         
         if not ret:
             break
-        
-        #Marcado de Objetos
-        results = object_model(frame,verbose=False) #devuelve una lista, en este caso una lista con un solo objeto
-        frame_ = it.annotate_image(frame,
-                                    labels=sv.Detections.from_ultralytics(results[0]),
-                                    stylized=stylized_ob_detection,
-                                    text_label=text_label)
-        video_BB.write(frame_)
-          
-        
+
+        annotated_frame = write_frame(frame)
+        ouput.write(annotated_frame)
+
     
     video.release()
-    video_BB.release()
+    ouput.release()
+
+
+        
+        
+        
+
+    
+
+    
+

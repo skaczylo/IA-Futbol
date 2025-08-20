@@ -25,7 +25,6 @@ def bounding_box_annotator(image,detections,text_label = True):
     bounding_box_annotator = sv.BoxAnnotator()
     frame_ = bounding_box_annotator.annotate(scene=image.copy(),detections=detections)
     
-
     if text_label is True:
         
         label_annotator = sv.LabelAnnotator()
@@ -33,6 +32,18 @@ def bounding_box_annotator(image,detections,text_label = True):
         frame_ = label_annotator.annotate(scene=frame_, detections=detections, labels=labels)
 
     return frame_
+
+def ellipse_annotator(image,detections,text_label = True):
+    ellipse_annotator = sv.EllipseAnnotator() #marcado de la imagen
+    annotated_image = ellipse_annotator.annotate(scene=image.copy(),detections=detections)
+
+    labels = [LABELS[int(id)] for id in detections.class_id]
+
+    if text_label is True:
+        label_annotator = sv.LabelAnnotator(text_padding=3,text_position=sv.Position.BOTTOM_CENTER) #etiqueta de clase
+        annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections, labels=labels)
+    
+    return annotated_image
 
 def referee_annotator(image,detections,text_label =True):
     """
@@ -122,10 +133,9 @@ def yolo_to_supervision_bb(img_size,bb_yolo):
     return (x_1, y_1, x_2, y_2)
 
 
-def annotate_image(image,labels,stylized=False,text_label = True):
-
+def annotate_image(image: str | np.ndarray,labels: str,stylized=False, text_label = True):
     """
-    Anota los boundings boxes en la imagen.
+    Anota las imagenes de una imagen
     "image" puede ser tanto una ruta a una imagen  o una imagen en ndarray
     Además "labels" ha de ser una ruta a un .txt con etiquetas en formato YOLO o
     un objeto Detections de la libreria Supervision
