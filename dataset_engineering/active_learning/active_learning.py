@@ -3,7 +3,6 @@ Contiene la clase llamada LS
 Permite, mediante la API, interactuar con Label Studio
 """
 
-
 from dotenv import load_dotenv
 import os
 from label_studio_sdk import LabelStudio
@@ -31,9 +30,9 @@ class LS:
         self.API_KEY = os.getenv("API_KEY")
         self.LABEL_STUDIO_URL = os.getenv("LABEL_STUDIO_URL")
         self.URL_REFRESH = os.getenv("URL_REFRESH") #Url para refrescar token de acceso
-        self.DOWNLOAD_PATH = os.getenv("DOWNLOAD_PATH") #Ruta donde se descargan las imagenes completadas
+
         self.IMG_PATH = os.getenv("IMG_PATH") #Ruta a las imagenes generadas
-        self.COMPLETED_TASKS_PATH = os.getenv("COMPLETED_TASKS_PATH") #Ruta a la carpeta Fine tuning
+        self.COMPLETED_TASKS_PATH = os.getenv("COMPLETED_TASKS_PATH") #Ruta a la carpeta de imagenes completadas
         self.DATASET = os.getenv("DATASET")
         response = requests.post(self.URL_REFRESH,json={"refresh": self.API_KEY})
         self.ACCESS_TOKEN = response.json().get("access")
@@ -45,27 +44,87 @@ class LS:
         self.project = next((p for p in projects_info if p.title == project_name),None)
         self.project = self.client.projects.get(self.project.id)
 
-       
-    def import_imgs(self):
-        #sincronizamos datos
-        storages = self.client.import_storage.local.list(project=self.project.id)
-
-        for strg in storages:
-            
-            self.client.import_storage.local.sync(
-                    strg.id,
-                    request_options={"timeout_in_seconds": 7200}  # 2 horas
-            )
-
-
     def refresh_token(self):
         response = requests.post(self.URL_REFRESH,json={"refresh": self.API_KEY})
         self.ACCESS_TOKEN = response.json().get("access")
 
-    def predict_img(self,image,img_width,img_height):
+
+    def delete_task(self,t_id):
         """
-        Dada una imagen, el modelo del proyecto predice la imagen
+        Elimina el task asociado a t_id y la imagen asociada
+        Args:
+            t_id (int): id del task
         """
+        self.refresh_token()
+        task = self.client.tasks.get(id = t_id)
+        self.client.tasks.delete(id=t_id)
+        img_path = f'/{task.data["image"].split("=")[1]}'
+
+        if os.path.exists(img_path):
+            os.remove(img_path)
+
+
+    def import_imgs(self):
+        """
+        Crea nuevas tareas asociadas a las nuevas imagenes generadas
+        """
+        storages = self.client.import_storage.local.list(project=self.project.id)
+
+        for strg in storages:
+            
+            self.client.import_storage.local.sync(strg.id,request_options={"timeout_in_seconds": 7200})
+
+
+    def sync_imgs(self):
+        """
+        Sincroniza las tareas con las imagenes almacenadas en IMG_PATH
+
+        Comprueba todas las tareas del proyecto y elimina aquellas cuya imagen ya no existe en la carpeta del almacenamiento.Esto asegura
+        que las tareas estén consistentes con el contenido actual del directorio de imagenes.
+        """
+
+        tasks= self.client.tasks.list(project=self.project.id)
+        
+        for i, task in enumerate(tqdm(tasks)):
+            task_dict = task.dict()
+            img_path = f'/{task_dict['data']['image'].split("=")[1]}'
+
+            if not os.path.exists(img_path):
+                self.delete_task(t_id=int(task_dict["id"]))
+        
+
+    def predict_image(self,image,img_width,img_height):
+        """
+        Realiza predicciones sobre una imagen usando el modelo.
+
+        Args:
+            image: imagen
+            img_width : anchura imagen
+            img_height: altura imagen
+
+        Returns:
+            list of dict: Lista de predicciones, cada una con la siguiente estructura:
+        
+            - 'result' (list of dict): Lista de objetos detectados, cada uno con:
+                - 'from_name' (str): Nombre de la etiqueta de origen ('label').
+                - 'to_name' (str): Nombre del destino ('img').
+                - 'original_width' (int): Ancho de la imagen original.
+                - 'original_height' (int): Alto de la imagen original.
+                - 'image_rotation' (int): Rotación de la imagen (0 si no hay rotación).
+                - 'value' (dict): Contiene las coordenadas y etiquetas del objeto detectado:
+                    - 'rotation' (int): Rotación del objeto (0 si no hay).
+                    - 'rectanglelabels' (list of str): Lista con la etiqueta del objeto.
+                    - 'width' (float): Ancho del rectángulo como porcentaje de la imagen.
+                    - 'height' (float): Alto del rectángulo como porcentaje de la imagen.
+                    - 'x' (float): Coordenada X del centro del rectángulo como porcentaje de la imagen.
+                    - 'y' (float): Coordenada Y del centro del rectángulo como porcentaje de la imagen.
+                - 'score' (float): Confianza de la predicción.
+                - 'type' (str): Tipo de objeto ('rectanglelabels').
+            - 'score' (float): Score global de la predicción (mínimo de los scores individuales).
+            - 'model_version' (str): Nombre o versión del modelo utilizado.
+
+        """
+
         results = self.model(image,verbose = False)
         predictions = []
         for result in results:
@@ -98,7 +157,15 @@ class LS:
 
         return predictions
     
-    def predict_image(self,t_id):
+    def annotate_image(self,t_id):
+
+        """
+        Pasa por el modelo la tarea asociada a t_id y crea los correspondientes bounding boxes
+
+        Args:
+            t_id (int) : id del task
+
+        """
 
         task = self.client.tasks.get(id = t_id)
         task_properties = task.dict()
@@ -111,30 +178,23 @@ class LS:
             request = requests.get(url, headers={'Authorization': f'Bearer {self.ACCESS_TOKEN}'}, stream=True)
             image = Image.open(request.raw)
             w,h = image.size
-            predictions = self.predict_img(image,w,h)[0]
+            predictions = self.predict_image(image,w,h)[0]
             self.client.predictions.create(task=task.id, result=predictions['result'], score=float(predictions['score']), model_version=predictions['model_version'])
 
 
-    def predict_all_tasks(self):
-
+    def predict_tasks(self):
+        """
+        Pasa las imagenes NO COMPLETADAS por el modelo   
+        """
+       
         tasks = self.client.tasks.list(project=self.project.id)
         for i, task in enumerate(tqdm(tasks)):
             t_properties = task.dict()
 
             if t_properties['completed_at'] is None: #Solo predecir sobre imagens que no esten completadas
-                self.predict_image(t_id= int(t_properties['id']))
+                self.annotate_image(t_id= int(t_properties['id']))
 
-    def predict_new_tasks(self):
-
-        tasks = self.client.tasks.list(project = self.project.id)
-
-        for i, task in enumerate(tqdm(tasks)):
-            t_properties = task.dict()
-
-            if t_properties["total_predictions"] == 0:
-               self.predict_image(t_id= int(t_properties['id']))
-
-
+   
 
     def export_completed_tasks(self):
         """
@@ -161,11 +221,11 @@ class LS:
         if download_snapshot_rq.status_code == 200:
             with zipfile.ZipFile(io.BytesIO(download_snapshot_rq.content)) as z:
             # Extraemos todo en la carpeta actual (o especifica otra ruta)
-                z.extractall(path=self.DOWNLOAD_PATH)
+                z.extractall(path=self.COMPLETED_TASKS_PATH)
                 print("Donwload ok")
 
             #Copiamos las imagenes y la etiquetas a fine_tuning
-            labels_path = os.path.join(self.DOWNLOAD_PATH,"labels")
+            labels_path = os.path.join(self.COMPLETED_TASKS_PATH,"labels")
             imgs_path = os.path.join(self.IMG_PATH)
             labels = os.listdir(labels_path)
 
@@ -185,8 +245,9 @@ class LS:
 
     def move2dataset(self):
         """
-        Mueve las imagenes y las etiquetas de las tareas COMPLETADAS al dataset base
+        Copia las imagenes y las etiquetas de las tareas COMPLETADAS al dataset base.
 
+        Las imagenes se añaden a la carpeta Train del Dataset
         """
         imgs_path = os.path.join(self.COMPLETED_TASKS_PATH,"images")
         labels_path = os.path.join(self.COMPLETED_TASKS_PATH,"labels")
@@ -202,33 +263,13 @@ class LS:
                         os.path.join(self.DATASET,"labels",name+".txt")) #Copioamos la etiqueta
                         
         
-    def delete_completed_tasks(self):
-        """
-        Elimina todos los tasks completados
-        """
-
-        tasks = self.client.tasks.list(project = self.project.id)
-    
-        for task in tasks:
-        
-            dic = task.dict()
-            if dic["completed_at"] != None: #esta completada
-                self.client.tasks.delete(id = dic["id"])#eliminar task
-                os.remove(f'/{task.data["image"].split("=")[1]}') #eliminar del disco
+  
                 
 
         
+    
 
-    def delete_task(self,t_id):
-        task = self.client.tasks.get(id = t_id)
-        self.client.tasks.delete(id=t_id)
-        os.remove(f'/{task.data["image"].split("=")[1]}')
-
-    def delete_all_tasks(self):
-        """
-        Elimina todas las imagenes a marcar
-        """
-        self.client.tasks.delete_all_tasks(self.project.id)
+    
 
 
 
