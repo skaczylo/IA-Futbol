@@ -1,3 +1,9 @@
+"""
+Contiene la clase llamada LS
+Permite, mediante la API, interactuar con Label Studio
+"""
+
+
 from dotenv import load_dotenv
 import os
 from label_studio_sdk import LabelStudio
