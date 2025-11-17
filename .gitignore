@@ -13,3 +13,4 @@ models/
 dataset.zip
 ByteTrack/
 **/yolo11n.pt
+**/soccernet_dataset/
