@@ -2,7 +2,7 @@ from tqdm import tqdm
 import cv2
 import supervision as sv
 import numpy as np
-from IPython.display import HTML
+from IPython.display import HTML,display
 from . import image_tools as it
 import random
 from tqdm import tqdm
@@ -79,7 +79,7 @@ def write_video(video_path:str,output_path:str,write_frame:Callable[[np.ndarray]
     fps = int(video.get(cv2.CAP_PROP_FPS))
     width  = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     ouput =  cv2.VideoWriter(output_path,fourcc,fps,(width,height),isColor=True)
 
