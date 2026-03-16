@@ -1,6 +1,9 @@
 import numpy as np
 
 
+PITCH_LENGTH=105.
+PITCH_WIDTH=68.
+
 class SoccerPitch:
     """Static class variables that are specified by the rules of the game """
     GOAL_LINE_TO_PENALTY_MARK = 11.0
@@ -106,7 +109,7 @@ class SoccerPitch:
         'Small rect. right top': (153, 23, 153)
     }
 
-    def __init__(self, pitch_length=105., pitch_width=68.):
+    def __init__(self, pitch_length=PITCH_LENGTH, pitch_width=PITCH_WIDTH):
         """
         Initialize 3D coordinates of all elements of the soccer pitch.
         :param pitch_length: According to FIFA rules, length belong to [90,120] meters

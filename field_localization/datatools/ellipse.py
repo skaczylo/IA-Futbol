@@ -13,6 +13,7 @@ from ellipse import LsqEllipse
 from datatools.line import find_closest_points
 from baseline.soccerpitch import SoccerPitch
 
+
 pitch = SoccerPitch()
 PITCH_POINTS = {**pitch.point_dict}
 
