@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, Circle
 from datatools.ellipse import PITCH_POINTS
+import numpy as np
+import cv2
 
 # Asumo que tienes definido GREEN en tu entorno, por ejemplo: GREEN = '#4C9A2A'
 GREEN = '#4C9A2A'
-def draw_pitch(figsize = (8.5,4.8)):
+def get_pitch_image(keypoints= None, figsize = (8.5,4.8)):
     fig, ax = plt.subplots(figsize=figsize)
     
     # Color de fondo verde estilo césped
@@ -63,5 +65,30 @@ def draw_pitch(figsize = (8.5,4.8)):
     ax.set_ylim(-35, 35)
     #fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
-    return fig, ax
+    #keypoints 
+
+    if len(keypoints) > 0 or keypoints is not None:
+        x_coords = keypoints[:, 0]
+        y_coords = keypoints[:, 1]
+    
+        ax.scatter(x_coords, y_coords, color="red", s=100, edgecolors="white", linewidths=1.5, zorder=5)
+
+
+    fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
+    fig.canvas.draw()
+    
+    # 1. Convertir el canvas a un buffer RGBA
+    rgba_buffer = fig.canvas.buffer_rgba()
+
+    # 2. Convertir a un array de numpy
+    img_array = np.asarray(rgba_buffer)
+
+    # 3. Matplotlib genera RGBA, pero OpenCV suele usar BGR. 
+    # Si vas a usar esta imagen con cv2.imshow o escribirla en un video:
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGBA2BGR)
+
+    # Es MUY importante cerrar la figura para no saturar la memoria RAM en un bucle de video
+    plt.close(fig)
+
+    return img_bgr
     

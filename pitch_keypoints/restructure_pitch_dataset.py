@@ -8,6 +8,7 @@ import shutil
 from datatools.intersections import get_intersections #Puntos del campo
 from datatools.reader import read_annot
 import json
+from  tqdm import tqdm
 
 def organize_dataset(folder_path):
     """
@@ -54,7 +55,7 @@ def new_yolo_labels(folder_path):
     os.makedirs(yolo_folder, exist_ok=True) #Creamos nueva carpeta
 
 
-    for json in os.listdir(os.path.join(folder_path,"soccernet_labels")): #Leemos jsons
+    for json in tqdm(os.listdir(os.path.join(folder_path,"soccernet_labels")),"Processing"): #Leemos jsons
 
 
         id = os.path.splitext(json)[0]
@@ -69,34 +70,37 @@ def new_yolo_labels(folder_path):
         annots = read_annot(json_path)
         intersections, _ = get_intersections(annots)
 
-        labels = [] #etiquetas que escribiremos
+        line = [] #etiqueta : Clase x y widht height px1 py1 vis1 px2 py2 vis2
 
+        line.append("0")
+        line.append(f"{0.5}")
+        line.append(f"{0.5}")
+        line.append(f"{1}")
+        line.append(f"{1}")
+        
         for class_id, pt in intersections.items():
             if pt is not None:
-                # Extraer x, y (soporta tuplas o np.arrays)
+               
                 x_px, y_px = float(pt[0]), float(pt[1])
                 
                 # Normalizar el centro de la caja (dividiendo por ancho y alto de la imagen)
                 x_center_norm = x_px / img_w
                 y_center_norm = y_px / img_h
                 
-                # Normalizar el ancho y alto de la cajita (8 píxeles)
-                w_norm = box_size / img_w
-                h_norm = box_size / img_h
-                
-                #Bounding boxes no se salgan de la imagen
-                w_norm = max(0.0, min(1.0, x_center_norm))
-                h_norm = max(0.0, min(1.0, y_center_norm))
-                
+          
                 # Formato YOLO Object Detection: <class> <x> <y> <w> <h>
-                labels.append(f"{class_id} {x_center_norm:.6f} {y_center_norm:.6f} {w_norm:.6f} {h_norm:.6f}")
+                line.append(f"{x_center_norm:.6f} {y_center_norm:.6f} {1}")
+            
+            else:
+                line.append(f"{0:.6f} {0:.6f} {0}")
+
 
 
         # 4. Escribir el archivo .txt solo si hay puntos visibles
         
         new_yolo_label = os.path.join(yolo_folder, id + '.txt')
         with open(new_yolo_label, 'w') as txt_file:
-            txt_file.write("\n".join(labels) + "\n")
+            txt_file.write(" ".join(line) + "\n")
 
 
 def new_labels(folder_path):
