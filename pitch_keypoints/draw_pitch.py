@@ -67,13 +67,14 @@ def get_pitch_image(keypoints= None, figsize = (8.5,4.8)):
 
     #keypoints 
 
-    if len(keypoints) > 0 or keypoints is not None:
+    if keypoints is not None and len(keypoints) > 0 :
         x_coords = keypoints[:, 0]
         y_coords = keypoints[:, 1]
     
         ax.scatter(x_coords, y_coords, color="red", s=100, edgecolors="white", linewidths=1.5, zorder=5)
 
 
+    ax.invert_yaxis()
     fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
     fig.canvas.draw()
     
