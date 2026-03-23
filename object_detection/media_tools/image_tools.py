@@ -18,6 +18,7 @@ PLAYER = 1
 REFEREE = 2
 BALL = 0
 BLUE = sv.Color(r=0, g=200, b =235)
+RED = sv.Color(r=235, g=30, b=30) 
 
 
 def bounding_box_annotator(image,detections,text_label = True):
@@ -60,13 +61,17 @@ def referee_annotator(image,detections,text_label =True):
     
     return annotated_image
 
-def player_annotator(image,detections,text_label =True):
+def player_annotator(image,detections,text_label =True, team = 0):
     """
     Marca a los jugadores con una elipse
     """
+    if team == 0:
+        ellipse_annotator = sv.EllipseAnnotator(color=RED) #marcado de la imagen
+        annotated_image = ellipse_annotator.annotate(scene=image.copy(),detections=detections)
+    else:
+        ellipse_annotator = sv.EllipseAnnotator(color=BLUE) #marcado de la imagen
+        annotated_image = ellipse_annotator.annotate(scene=image.copy(),detections=detections)
 
-    ellipse_annotator = sv.EllipseAnnotator(color=BLUE) #marcado de la imagen
-    annotated_image = ellipse_annotator.annotate(scene=image.copy(),detections=detections)
 
     if text_label is True:
     

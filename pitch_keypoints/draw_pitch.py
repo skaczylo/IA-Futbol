@@ -5,6 +5,7 @@ import cv2
 import torch
 
 # Asumo que tienes definido GREEN en tu entorno, por ejemplo: GREEN = '#4C9A2A'
+PALETA_COLORES = np.random.randint(0, 256, size=(60, 3), dtype=int).tolist()
 GREEN = '#4C9A2A'
 def draw_pitch(figsize = (8.5,4.8)):
     fig, ax = plt.subplots(figsize=figsize)
