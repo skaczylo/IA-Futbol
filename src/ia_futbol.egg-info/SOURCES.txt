@@ -1,0 +1,11 @@
+setup.py
+src/ia_futbol.egg-info/PKG-INFO
+src/ia_futbol.egg-info/SOURCES.txt
+src/ia_futbol.egg-info/dependency_links.txt
+src/ia_futbol.egg-info/top_level.txt
+src/team_segmentation/__init__.py
+src/utils/__init__.py
+src/utils/image_tools.py
+src/utils/path.py
+src/utils/pitch.py
+src/utils/video_tools.py
