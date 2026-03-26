@@ -15,7 +15,10 @@ PLAYER = 1
 REFEREE = 2
 BALL = 0
 BLUE = sv.Color(r=0, g=200, b =235)
-RED = sv.Color(r=235, g=30, b=30) 
+RED = sv.Color(r=235, g=30, b=30)
+
+TEAM_A = "#FF3300"
+TEAM_B = "#0066FF"
 
 
 def draw_annotations(
@@ -36,7 +39,7 @@ def draw_annotations(
     Returns:
         np.ndarray: La imagen con las anotaciones dibujadas.
     """
-    # Hacemos una copia para no modificar la imagen original por referencia
+   
     annotated_image = image.copy()
     annotator = sv.BoxAnnotator(color=color,thickness=2)
     
@@ -96,25 +99,51 @@ def crop_detections(image: np.ndarray, detections: sv.Detections) -> list[np.nda
     return crops
         
 
-def yolo_to_supervision_bb(img_size,bb_yolo):
+def annotate_yolo(image_path: str , labels_path: str) -> np.ndarray:
     """
-    Transforma las coordenadas del BB en formato YOLO (x_centro, y_centro,ancho,altura) normalizaod
-    a un formato válido para supervision : xyxy = esquina superior izquierda + esquina inferior derecha
-
+    Dibuja las anotaciones YOLO sobre una imagen.
+ 
+    Args:
+        image_path:  Ruta a la imagen (.jpg, .png, ...)
+        labels_path: Ruta al .txt con etiquetas en formato YOLO
+                     (class cx cy w h), coordenadas normalizadas [0, 1]
+ 
+    Returns:
+        Imagen anotada como array numpy BGR (misma que devuelve cv2)
     """
-    img_height,img_width, _ = img_size
-    x_c, y_c, w, h = bb_yolo
-    x_center = x_c * img_width
-    y_center = y_c * img_height
-    box_width = w * img_width
-    box_height = h * img_height
-
-    x_1 = int(x_center - box_width / 2)
-    y_1 = int(y_center - box_height / 2)
-    x_2 = int(x_center + box_width / 2)
-    y_2 = int(y_center + box_height / 2)
-
-    return (x_1, y_1, x_2, y_2)
+   
+    image = cv2.imread(str(image_path))
+    h, w = image.shape[:2]
+ 
+    # Paleta de colores por clase (BGR)
+    rng = np.random.default_rng(42)
+    colors = {i: tuple(int(c) for c in rng.integers(50, 220, 3)) for i in range(100)}
+ 
+    with open(labels_path) as f:
+        lines = [l.strip() for l in f if l.strip()]
+ 
+    for line in lines:
+        parts = line.split()
+        if len(parts) != 5:
+            continue
+ 
+        class_id = int(parts[0])
+        cx, cy, bw, bh = map(float, parts[1:])
+ 
+        # Desnormalizar
+        x1 = int((cx - bw / 2) * w)
+        y1 = int((cy - bh / 2) * h)
+        x2 = int((cx + bw / 2) * w)
+        y2 = int((cy + bh / 2) * h)
+ 
+        # Clamp para no salir de la imagen
+        color = colors[class_id % 100]
+ 
+        # Bounding box
+        cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness=2)
+ 
+    return image
+ 
 
 
 

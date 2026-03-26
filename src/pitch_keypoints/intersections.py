@@ -4,9 +4,9 @@ from collections import defaultdict
 import numpy as np
 from numpy.polynomial import polynomial as P
 
-from pitch_keypoints.geom import point_within_img
-from datatools.line import find_closest_points
-from pitch_keypoints.ellipse import add_conic_points
+from .geom import point_within_img
+from .line import find_closest_points
+from .ellipse import add_conic_points
 
 EPS = 1e-18
 

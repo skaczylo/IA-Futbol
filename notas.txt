@@ -1,17 +1,28 @@
--Dataset
-    -Técnicas de marcado (a unas fotos):
-        -cv2 
-
--Modelo Deteccion
-    -Explicar tipo de Modelo
-    -Explicar funcionamiento yolo y diferencias
-    -¿Comparar resultados con una redconvolucional normal ?
-
--Tracking
-    -Explicar distintos algoritmos e implementarlos
-    
--Homografía 
-    -Campo de futbol y posiciones relativas
-    -Reconstruccion del partido + Tracking
-
--Re-identificacion?
+IA-Futbol/
+├── notebooks/                  # (Opcional) Mueve aquí todos tus .ipynb para limpiar las carpetas de código
+├── src/                        # Todo tu código Python va aquí
+│   ├── __init__.py
+│   ├── utils/                  # CÓDIGO COMPARTIDO (Refactorizado)
+│   │   ├── __init__.py
+│   │   ├── media_tools/        # <-- Solo una copia de esto
+│   │   │   ├── __init__.py
+│   │   │   ├── image_tools.py
+│   │   │   └── video_tools.py
+│   ├── dataset_engineering/
+│   │   ├── __init__.py
+│   │   ├── active_learning/
+│   │   └── data_generator/
+│   ├── object_detection/
+│   │   ├── __init__.py
+│   │   └── (sus scripts, sin la carpeta media_tools)
+│   ├── pitch_keypoints/
+│   │   ├── __init__.py
+│   │   ├── datatools/          # (ellipse.py, geom.py, etc.)
+│   │   ├── draw_pitch.py
+│   │   └── homography.py
+│   └── team_segmentation/
+│       ├── __init__.py
+│       └── team_segmentation.py
+├── setup.py                    # <-- LA CLAVE DEL ÉXITO
+├── notas.txt
+└── .gitattributes

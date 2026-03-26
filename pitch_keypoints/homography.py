@@ -1,6 +1,6 @@
 import numpy as np
-from datatools.ellipse import INTERSECTON_TO_PITCH_POINTS
-from datatools.ellipse import PITCH_POINTS
+from pitch_keypoints.ellipse import INTERSECTON_TO_PITCH_POINTS
+from pitch_keypoints.ellipse import PITCH_POINTS
 import cv2
 
 
