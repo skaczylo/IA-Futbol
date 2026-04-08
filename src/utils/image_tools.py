@@ -101,7 +101,7 @@ def crop_detections(image: np.ndarray, detections: sv.Detections) -> list[np.nda
 
 def annotate_yolo(image_path: str , labels_path: str) -> np.ndarray:
     """
-    Dibuja las anotaciones YOLO sobre una imagen.
+    Dibuja las etiquetas YOLO sobre una imagen.
  
     Args:
         image_path:  Ruta a la imagen (.jpg, .png, ...)
