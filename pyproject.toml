@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ia-futbol"
+version = "0.1.0"
+description = "Librería de utilidades para el proyecto de IA en Fútbol."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "label-studio-sdk",
+    "opencv-python",
+    "python-dotenv",
+    "soccernet",
+    "supervision",
+    "ultralytics",
+    "numpy",
+    "tqdm",
+    "matplotlib",
+    "requests",
+    "Pillow",
+    "yt-dlp",
+    "ipython", # Para display en notebooks
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
