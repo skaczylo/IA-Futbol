@@ -6,7 +6,7 @@ from io import BytesIO
 import os
 from urllib.parse import urlparse, parse_qs
 from dotenv import load_dotenv
-from ia_futbol.utils.config import BEST_OBJ_DETECTION_MODEL, ENV_PATH, DATA_GENERATED_IMGS
+from utils.config import BEST_OBJ_DETECTION_MODEL, ENV_PATH, DATA_GENERATED_IMGS
 
 load_dotenv(ENV_PATH)
 

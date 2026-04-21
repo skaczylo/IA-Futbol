@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np
-from ia_futbol.pitch_keypoints.ellipse import LsqEllipse
+from ellipse import LsqEllipse
 
 from .line import find_closest_points
 from .soccerpitch import SoccerPitch

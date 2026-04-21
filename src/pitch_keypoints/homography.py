@@ -1,13 +1,16 @@
 import numpy as np
-from ia_futbol.pitch_keypoints.ellipse import INTERSECTON_TO_PITCH_POINTS
-from ia_futbol.pitch_keypoints.ellipse import PITCH_POINTS
+from pitch_keypoints.ellipse import INTERSECTON_TO_PITCH_POINTS
+from pitch_keypoints.ellipse import PITCH_POINTS
 import cv2
 
 
 def get_homography(keypoints_detected,conf = 0.85):
 
     """
-    Calcula, si se puede, Homografia H de pixeles a mapa 2D
+    Calcula, si se puede, Homografia H de pixeles a mapa 2D.
+
+    La homografia se calcula a partir de los keypoints detectados, filtrando por confianza. Se necesitan al menos 4 puntos para calcularla.
+    
     """
 
     H = None

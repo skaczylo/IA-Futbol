@@ -43,7 +43,7 @@ def draw_annotation(ax, label, points, w, h, color, line_width, marker_size, sho
         ax.plot(xs[0], ys[0], "o", color=color, markersize=marker_size * 2)
 
     elif len(points) == 2:
-        # Siempre segmento recto entre los dos puntos — nunca rectángulo
+
         ax.plot(xs, ys, color=color, linewidth=line_width,
                 marker="o", markersize=marker_size)
 
@@ -66,7 +66,6 @@ def draw_annotation(ax, label, points, w, h, color, line_width, marker_size, sho
 def draw_field_lines(
     image_path: str,
     json_source,
-    figsize: tuple = (14, 8),
     line_width: float = 2.0,
     marker_size: float = 3.0,
     show_labels: bool = False,
@@ -82,38 +81,33 @@ def draw_field_lines(
 
     if not annotations:
         print("El JSON no contiene anotaciones.")
-        return None
+        return np.array(img) # Devolver imagen original si no hay anotaciones
 
     palette = build_color_palette(list(annotations.keys()))
 
-    fig, ax = plt.subplots(figsize=figsize)
-    ax.imshow(img)
-
-    legend_entries: dict[str, mpatches.Patch] = {}
+    
+    dpi = 100
+    fig = plt.figure(figsize=(w / dpi, h / dpi), dpi=dpi)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.axis("off") # Ocultar ejes
+    
+    ax.imshow(img, aspect='auto')
 
     for label, points in annotations.items():
         if not points:
             continue
         category = get_category(label)
         color = palette[category]
+        
         draw_annotation(ax, label, points, w, h, color, line_width, marker_size, show_labels)
-        if category not in legend_entries:
-            legend_entries[category] = mpatches.Patch(color=color, label=category)
 
-    ax.legend(
-        handles=list(legend_entries.values()),
-        loc="upper left", fontsize=8, framealpha=0.75,
-        facecolor="#111111", labelcolor="white", edgecolor="#444444",
-    )
-    ax.axis("off")
-    ax.set_title(f"Field annotations  —  {len(annotations)} labels",
-                 color="white", fontsize=12, pad=8)
-    fig.patch.set_facecolor("#111111")
-    plt.tight_layout()
-
-    # ── Convertir figura a array numpy ────────────────────────────────────────
+    
     fig.canvas.draw()
-    result = np.asarray(fig.canvas.buffer_rgba())[..., :3][..., ::-1]  # Extraer RGB e invertir canales a BGR
-    plt.close(fig)  # liberar memoria
-
-    return result  # np.ndarray (H, W, 3) en formato BGR
+    
+    result = np.asarray(fig.canvas.buffer_rgba())
+    result = result[..., :3]
+    result = result[..., ::-1]
+    
+    plt.close(fig)
+    return result
+    

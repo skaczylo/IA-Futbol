@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # Raíz del proyecto
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # --- DATASETS ---
 DATASETS_DIR = PROJECT_ROOT / "datasets"
@@ -29,7 +29,9 @@ OBJ_DETECTION_RUN2 = OBJ_DETECTION_RUNS/"it_2"
 
 BEST_OBJ_DETECTION_MODEL = OBJ_DETECTION_RUNS / "it_2" / "weights" / "best.pt"
 
+
 PITCH_KEYPOINTS_RUNS = RUNS_DIR / "pitch_keypoints"
+BEST_KPT_MODEL = PITCH_KEYPOINTS_RUNS / "train" / "weights" / "best.pt"
 
 #ENV
 ENV_PATH = PROJECT_ROOT / ".env"

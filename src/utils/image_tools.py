@@ -1,6 +1,8 @@
 """
 Modulo con funciones relativas al tratado de imagenes
 """
+from turtle import color
+
 from tqdm.notebook import tqdm
 import cv2
 import supervision as sv
@@ -21,13 +23,27 @@ RED = sv.Color(r=235, g=30, b=30)
 TEAM_A = "#FF3300"
 TEAM_B = "#0066FF"
 
+def annotate_ball(image: np.array, detections: sv.Detections):
+    """
+    Dibuja un triangulo en la imagen sobre el balón detectado.
+    
+    Args:
+        image (np.ndarray): La imagen o frame original.
+        detections (sv.Detections): Objeto de supervision con las detecciones (bboxes, etc). 
+    Returns:
+        np.ndarray: La imagen con las anotaciones dibujadas.
+    """
+    annotated_image = image.copy()
+    black_triangle = sv.TriangleAnnotator(color=sv.Color.BLACK,base=12,height=12) #marcado de la imagen
+    annotated_image = black_triangle.annotate(scene=image.copy(),detections=detections)
 
-def draw_annotations(
-    image: np.ndarray, 
-    detections: sv.Detections, 
-    color: str = "#FF3300", # ROJO por defecto
-    stylized: bool = False
-) -> np.ndarray:
+    yellow_triangle = sv.TriangleAnnotator(color=sv.Color.YELLOW,base=10,height=10) #marcado de la imagen
+    annotated_image = yellow_triangle.annotate(scene=annotated_image.copy(),detections=detections)
+
+    return annotated_image
+
+
+def draw_annotations(image: np.ndarray, detections: sv.Detections, color: str = "#FF3300",stylized: bool = False) -> np.ndarray:
     """
     Dibuja anotaciones sobre una imagen basadas en un objeto sv.Detections.
     
@@ -56,25 +72,49 @@ def draw_annotations(
     return annotated_image
 
 
-
-def annotate_ball(image: np.array, detections: sv.Detections):
+def draw_keypoints(detections,image: np.ndarray | str,conf_threshold: float = 0.5) -> np.ndarray:
     """
-    Dibuja un triangulo en la imagen sobre el balón detectado.
+    Dibuja los keypoints de las detecciones sobre la imagen.
     
     Args:
         image (np.ndarray): La imagen o frame original.
-        detections (sv.Detections): Objeto de supervision con las detecciones (bboxes, etc). 
+        detections (sv.Detections): Objeto de supervision con las detecciones (keypoints, etc).
+        conf_threshold (float): Umbral de confianza para filtrar los keypoints.
+        
     Returns:
-        np.ndarray: La imagen con las anotaciones dibujadas.
+        np.ndarray: La imagen con los keypoints dibujados.
     """
-    annotated_image = image.copy()
-    black_triangle = sv.TriangleAnnotator(color=sv.Color.BLACK,base=12,height=12) #marcado de la imagen
-    annotated_image = black_triangle.annotate(scene=image.copy(),detections=detections)
 
-    yellow_triangle = sv.TriangleAnnotator(color=sv.Color.YELLOW,base=10,height=10) #marcado de la imagen
-    annotated_image = yellow_triangle.annotate(scene=annotated_image.copy(),detections=detections)
+    if isinstance(image, str):
+        image = cv2.imread(image)
+
+
+    annotated_image = image.copy()
+    h, w = annotated_image.shape[:2]
+    confs = detections.keypoints.conf[0]
+    kpts = detections.keypoints.xy[0]
+
+    for conf,kpt in zip(confs,kpts):
+   
+        if conf < conf_threshold:
+            continue  # Saltar puntos con baja confianza
+
+        x, y = int(kpt[0]), int(kpt[1])
+
+        if x == 0 and y == 0:
+            continue  # Saltar puntos no detectados
+
+        channels = [np.random.randint(200, 256), np.random.randint(0, 64), np.random.randint(0, 256)]
+        np.random.shuffle(channels) 
+        color = tuple(channels)     
+
+        cv2.circle(annotated_image, (x, y), radius=max(1, int(w * 0.006)), color=color, thickness=-1)
+
+
 
     return annotated_image
+
+
 
 
 def crop_detections(image: np.ndarray, detections: sv.Detections) -> list[np.ndarray]:
@@ -148,6 +188,50 @@ def annotate_yolo(image_path: str , labels_path: str) -> np.ndarray:
  
     return image
  
+
+
+def annotate_yolo_pose(image_path: str, keypoints: dict) -> np.ndarray:
+    """
+    Dibuja las etiquetas YOLO Pose sobre una imagen.
+ 
+    Args:
+        image_path: Ruta a la imagen (.jpg, .png, ...)
+        keypoints: Diccionario donde cada valor es (id, x_norm, y_norm, visibility)
+    """
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"No se pudo cargar la imagen en: {image_path}")
+
+    h, w = img.shape[:2]
+
+
+    print(keypoints)
+    for x, y, v in keypoints.values():
+
+        
+        
+        x_px = int(x * w)
+        y_px = int(y * h)
+
+        # Solo dibujar si el punto es visible (v == 2)
+        if v == 2:
+            
+
+            # Color aleatorio para cada punto
+            
+            channels = [np.random.randint(200, 256), np.random.randint(0, 64), np.random.randint(0, 256)]
+            np.random.shuffle(channels) # Esto modifica 'channels' directamente
+            color = tuple(channels)     # Ahora 'channels' ya está mezclado
+
+        
+            cv2.circle(img, (x_px, y_px), radius=5, color=color, thickness=-1)
+
+         
+    return img
+
+
+
+
 
 def _display_single_image_on_axis(ax, image_data):
     """
@@ -223,3 +307,20 @@ def display_images(images: list, cols: int, rows: int, titles: list = None, figs
     
     plt.tight_layout()
     plt.show()
+
+def fig_to_image(fig):
+    """
+    Convierte una figura de Matplotlib a una imagen de OpenCV (numpy array).
+    
+    Args:
+        fig: Objeto de figura de Matplotlib.
+        
+    Returns:
+        np.ndarray: Imagen en formato BGR (lista para OpenCV).
+    """
+    fig,ax = fig 
+    fig.canvas.draw()
+
+    img_array = np.array(fig.canvas.renderer.buffer_rgba())
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGBA2BGR)
+    return img_bgr

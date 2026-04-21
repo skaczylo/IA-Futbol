@@ -26,3 +26,19 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.uv]
+package = true 
+
+[tool.uv.workspace]
+members = [
+    ".",
+]
+
+[tool.uv.sources]
+ia-futbol = { workspace = true, editable = true }
+
+[dependency-groups]
+dev = [
+    "ia-futbol",
+]
