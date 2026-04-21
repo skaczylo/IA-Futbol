@@ -23,6 +23,20 @@ RED = sv.Color(r=235, g=30, b=30)
 TEAM_A = "#FF3300"
 TEAM_B = "#0066FF"
 
+KEYPOINT_COLORS = []
+for _ in range(57): # Generamos 57 colores
+    # Mantenemos tu estilo de colores vibrantes / neón
+    r = int(np.random.randint(200, 256))
+    g = int(np.random.randint(0, 64))
+    b = int(np.random.randint(0, 256))
+    
+    color_options = [(r, g, b), (r, b, g), (b, r, g), (b, g, r), (g, b, r), (g, r, b)]
+    color_fijo = color_options[np.random.randint(0, 6)]
+    
+    KEYPOINT_COLORS.append(color_fijo)
+
+
+
 def annotate_ball(image: np.array, detections: sv.Detections):
     """
     Dibuja un triangulo en la imagen sobre el balón detectado.
@@ -72,47 +86,34 @@ def draw_annotations(image: np.ndarray, detections: sv.Detections, color: str = 
     return annotated_image
 
 
-def draw_keypoints(detections,image: np.ndarray | str,conf_threshold: float = 0.5) -> np.ndarray:
+def draw_keypoints(detections, image: np.ndarray, conf_threshold: float = 0.5) -> np.ndarray:
     """
-    Dibuja los keypoints de las detecciones sobre la imagen.
-    
-    Args:
-        image (np.ndarray): La imagen o frame original.
-        detections (sv.Detections): Objeto de supervision con las detecciones (keypoints, etc).
-        conf_threshold (float): Umbral de confianza para filtrar los keypoints.
-        
-    Returns:
-        np.ndarray: La imagen con los keypoints dibujados.
+    Dibuja los keypoints de las detecciones sobre la imagen de forma optimizada.
+    Cada keypoint tiene un color fijo asignado.
     """
-
     if isinstance(image, str):
         image = cv2.imread(image)
 
+    confs = detections.keypoints.conf[0].cpu().numpy()
+    kpts = detections.keypoints.xy[0].cpu().numpy()
 
-    annotated_image = image.copy()
-    h, w = annotated_image.shape[:2]
-    confs = detections.keypoints.conf[0]
-    kpts = detections.keypoints.xy[0]
 
-    for conf,kpt in zip(confs,kpts):
-   
+    h, w = image.shape[:2]
+    radius = max(1, int(w * 0.006))
+
+    for i, (conf, kpt) in enumerate(zip(confs, kpts)):
         if conf < conf_threshold:
-            continue  # Saltar puntos con baja confianza
+            continue
 
         x, y = int(kpt[0]), int(kpt[1])
-
         if x == 0 and y == 0:
-            continue  # Saltar puntos no detectados
+            continue
 
-        channels = [np.random.randint(200, 256), np.random.randint(0, 64), np.random.randint(0, 256)]
-        np.random.shuffle(channels) 
-        color = tuple(channels)     
+        color = KEYPOINT_COLORS[i % len(KEYPOINT_COLORS)] 
 
-        cv2.circle(annotated_image, (x, y), radius=max(1, int(w * 0.006)), color=color, thickness=-1)
+        cv2.circle(image, (x, y), radius=radius, color=color, thickness=-1)
 
-
-
-    return annotated_image
+    return image
 
 
 

@@ -71,14 +71,12 @@ def draw_pitch(figsize=(12, 8)):
     ax.set_ylim(-half_wid - 1, half_wid + 1)
     
     # Forzar a que el dibujo ocupe toda la ventana del plot
-    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-
     plt.close(fig)
     
     return fig, ax
 
 
-def draw_objects_on_pitch(pitch, players, color = "#DF0A0A", object_size=5):
+def draw_objects_on_pitch(pitch, players, color = "#DF0A0A", object_size=20):
     """
     Dibuja objetos (jugadores, balón, etc.) sobre el mapa del campo.
     
@@ -93,7 +91,7 @@ def draw_objects_on_pitch(pitch, players, color = "#DF0A0A", object_size=5):
     if len(players) == 0:
         return fig, ax
     
-    
+
     ax.invert_yaxis()
 
     # Iteramos sobre las coordenadas y los colores simultáneamente
@@ -111,7 +109,7 @@ def draw_objects_on_pitch(pitch, players, color = "#DF0A0A", object_size=5):
 
 
 
-def overlay_pitch_on_image(image, pitch, scale=0.25, padding_bottom=20, alpha=0.7):
+def overlay_pitch_on_image(image, pitch, scale=0.25, padding_bottom=20, alpha=0.5):
     """
     Superpone el dibujo del campo (minimapa) sobre la imagen principal con transparencia.
     

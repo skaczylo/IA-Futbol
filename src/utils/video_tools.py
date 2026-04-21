@@ -1,5 +1,5 @@
 import cv2
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from IPython.display import HTML,display
 
 def process_and_write_video(input_path: str, output_path: str, process_frame_func:callable, **kwargs):
